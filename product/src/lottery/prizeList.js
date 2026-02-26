@@ -1,7 +1,7 @@
 const MAX_TOP = 300,
   MAX_WIDTH = document.body.clientWidth;
 
-let defaultType = 0;
+
 
 let prizes;
 const DEFAULT_MESS = [
@@ -149,27 +149,18 @@ let addQipao = (() => {
 
 function setPrizes(pri) {
   prizes = pri;
-  defaultType = prizes[0]["type"];
   lasetPrizeIndex = pri.length - 1;
 }
 
 function showPrizeList(currentPrizeIndex) {
   let currentPrize = prizes[currentPrizeIndex];
-  if (currentPrize.type === defaultType) {
-    currentPrize.count === "不限制";
-  }
   let htmlCode = `<div class="prize-mess">正在抽取<label id="prizeType" class="prize-shine">${currentPrize.text}</label><label id="prizeText" class="prize-shine">${currentPrize.title}</label>，剩余<label id="prizeLeft" class="prize-shine">${currentPrize.count}</label>个</div><ul class="prize-list">`;
   prizes.forEach(item => {
-    if (item.type === defaultType) {
-      return true;
-    }
     htmlCode += `<li id="prize-item-${item.type}" class="prize-item ${
       item.type == currentPrize.type ? "shine" : ""
     }">
                         <span></span><span></span><span></span><span></span>
-                        <div class="prize-img">
-                            <img src="${item.img}" alt="${item.title}">
-                        </div>
+
                         <div class="prize-text">
                             <h5 class="prize-title">${item.text} ${
       item.title
@@ -246,12 +237,7 @@ let setPrizeData = (function () {
       lasetPrizeIndex = currentPrizeIndex;
     }
 
-    if (currentPrizeIndex === 0) {
-      prizeElement.prizeType.textContent = "特别奖";
-      prizeElement.prizeText.textContent = " ";
-      prizeElement.prizeLeft.textContent = "不限制";
-      return;
-    }
+
 
     count = totalCount - count;
     count = count < 0 ? 0 : count;

@@ -3,3 +3,18 @@ node_modules/
 dist/
 temp.json
 error.json
+
+# OSX
+.DS_Store
+
+# IDE
+.idea/
+
+# Excel files
+*.xlsx
+
+# Python files
+*.py
+
+# JSON files
+users_full.json

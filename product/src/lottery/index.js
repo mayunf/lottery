@@ -296,10 +296,20 @@ function bindEvent() {
           addQipao(`数据已保存到EXCEL中。`);
         });
         break;
+
     }
   });
 
   window.addEventListener("resize", onWindowResize, false);
+
+  // 键盘事件监听，支持F11快捷键全屏
+  window.addEventListener("keydown", function(e) {
+    // F11键触发全屏切换
+    if (e.key === "F11" || e.keyCode === 122) {
+      e.preventDefault(); // 阻止浏览器默认的F11行为
+      toggleFullscreen();
+    }
+  });
 }
 
 function switchScreen(type) {
@@ -344,12 +354,9 @@ function createCard(user, isBold, id, showTable) {
     element.style.backgroundColor =
       "rgba(0,127,127," + (Math.random() * 0.7 + 0.25) + ")";
   }
-  //添加公司标识
-  element.appendChild(createElement("company", COMPANY));
+  element.appendChild(createElement("avatar-container", "<img class='avatar' src='" + (user[3] || "") + "' alt='avatar'/>"));
 
   element.appendChild(createElement("name", user[1]));
-
-  element.appendChild(createElement("details", user[0] + "<br/>" + user[2]));
   return element;
 }
 
@@ -479,7 +486,7 @@ function selectCard(duration = 600) {
 
   // 计算位置信息, 大于5个分两排显示
   if (currentLuckys.length > 5) {
-    let yPosition = [-87, 87],
+    let yPosition = [-95, 95],
       l = selectedCardIndex.length,
       mid = Math.ceil(l / 2);
     tag = -(mid - 1) / 2;
@@ -607,30 +614,54 @@ function resetCard(duration = 500) {
   });
 }
 
-/**
- * 抽奖
- */
+function calculateFairLotteryCount() {
+  const leftCount = basicData.leftUsers.length;
+  
+  let remainingPrizes = 0;
+  
+  for (let i = currentPrizeIndex; i >= 0; i--) {
+    const prize = basicData.prizes[i];
+    const luckyData = basicData.luckyUsers[prize.type] || [];
+    remainingPrizes += prize.count - luckyData.length;
+  }
+  
+  if (remainingPrizes >= leftCount) {
+    return null;
+  }
+  
+  let roundsLeft = 0;
+  for (let i = currentPrizeIndex; i >= 0; i--) {
+    const prize = basicData.prizes[i];
+    const luckyData = basicData.luckyUsers[prize.type] || [];
+    if (prize.count - luckyData.length > 0) {
+      roundsLeft++;
+    }
+  }
+  
+  if (roundsLeft <= 1) {
+    return leftCount;
+  }
+  
+  return null;
+}
+
 function lottery() {
-  // if (isLotting) {
-  //   rotateObj.stop();
-  //   btns.lottery.innerHTML = "开始抽奖";
-  //   return;
-  // }
   btns.lottery.innerHTML = "结束抽奖";
   rotateBall().then(() => {
-    // 将之前的记录置空
     currentLuckys = [];
     selectedCardIndex = [];
-    // 当前同时抽取的数目,当前奖品抽完还可以继续抽，但是不记录数据
     let perCount = EACH_COUNT[currentPrizeIndex],
       luckyData = basicData.luckyUsers[currentPrize.type],
       leftCount = basicData.leftUsers.length,
       leftPrizeCount = currentPrize.count - (luckyData ? luckyData.length : 0);
 
-    if (leftCount < perCount) {
-      addQipao("剩余参与抽奖人员不足，现在重新设置所有人员可以进行二次抽奖！");
-      basicData.leftUsers = basicData.users.slice();
-      leftCount = basicData.leftUsers.length;
+    const fairCount = calculateFairLotteryCount();
+    if (fairCount !== null) {
+      perCount = fairCount;
+      addQipao(`为确保全员中奖，本轮抽取${perCount}人！`);
+    } else if (leftCount < perCount) {
+      addQipao(`剩余参与抽奖人员不足，调整本轮抽取人数为${leftCount}人！`);
+      perCount = leftCount;
     }
 
     for (let i = 0; i < perCount; i++) {
@@ -707,9 +738,7 @@ function random(num) {
 function changeCard(cardIndex, user) {
   let card = threeDCards[cardIndex].element;
 
-  card.innerHTML = `<div class="company">${COMPANY}</div><div class="name">${
-    user[1]
-  }</div><div class="details">${user[0] || ""}<br/>${user[2] || "PSST"}</div>`;
+  card.innerHTML = `<div class="avatar-container"><img class='avatar' src='${user[3] || ""}' alt='avatar'/></div><div class="name">${user[1]}</div>`;
 }
 
 /**
@@ -820,6 +849,29 @@ function createHighlight() {
   });
 
   return highlight;
+}
+
+/**
+ * 切换全屏
+ */
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen();
+    } else if (document.documentElement.webkitRequestFullscreen) {
+      document.documentElement.webkitRequestFullscreen();
+    } else if (document.documentElement.msRequestFullscreen) {
+      document.documentElement.msRequestFullscreen();
+    }
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+  }
 }
 
 let onload = window.onload;
